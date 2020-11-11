@@ -11,10 +11,10 @@ import (
 
 type serviceMock struct {
 	returnValue *DeviceWithId
-	returnError *MessageErr
+	returnError error
 }
 
-func (s *serviceMock) Create(device *Device) (*DeviceWithId, *MessageErr) {
+func (s *serviceMock) Create(device *Device) (*DeviceWithId, error) {
 	return s.returnValue, s.returnError
 }
 

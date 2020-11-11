@@ -43,8 +43,8 @@ func TestDevicesService_CreateDevice_Fail_Interval(t *testing.T) {
 	_, err := sut.Create(device)
 
 	assert.NotNil(t, err)
-	assert.EqualValues(t, "Request cannot be validate: interval has to be greater than 0;", err.Message)
-	assert.EqualValues(t, "bad_request", err.Error)
+	assert.EqualValues(t, "Request cannot be validate: interval has to be greater than 0;", err.Error())
+	assert.EqualValues(t, "bad_request", err.(*MessageErr).Code)
 }
 
 func TestDevicesService_CreateDevice_Fail_Name(t *testing.T) {
@@ -58,8 +58,8 @@ func TestDevicesService_CreateDevice_Fail_Name(t *testing.T) {
 	_, err := sut.Create(device)
 
 	assert.NotNil(t, err)
-	assert.EqualValues(t, "Request cannot be validate: device name can't be empty;", err.Message)
-	assert.EqualValues(t, "bad_request", err.Error)
+	assert.EqualValues(t, "Request cannot be validate: device name can't be empty;", err.Error())
+	assert.EqualValues(t, "bad_request", err.(*MessageErr).Code)
 }
 
 func TestDevicesService_CreateDevice_Database_Error(t *testing.T) {
@@ -75,6 +75,6 @@ func TestDevicesService_CreateDevice_Database_Error(t *testing.T) {
 	_, err := sut.Create(device)
 
 	assert.NotNil(t, err)
-	assert.EqualValues(t, "database error", err.Message)
-	assert.EqualValues(t, "server_error", err.Error)
+	assert.EqualValues(t, "database error", err.Error())
+	assert.EqualValues(t, "server_error", err.(*MessageErr).Code)
 }

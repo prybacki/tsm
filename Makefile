@@ -1,8 +1,8 @@
 build:
-	go build -o ./bin .
+	go build .
 
-run:
-	sh bin/start.sh
+run: build
+	./tsm
 
 test:
 	go test ./...

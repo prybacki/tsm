@@ -4,11 +4,9 @@ import (
 	"github.com/gorilla/mux"
 )
 
-type DeviceController struct {
-	DeviceService DeviceCreator
-}
-
-func SetupRouter(r *mux.Router) {
+func SetupRouter() *mux.Router {
+	r := mux.NewRouter()
 	deviceController := DeviceController{&DeviceService{NewInMemRepo()}}
 	r.HandleFunc("/devices", deviceController.HandlePost).Methods("POST")
+	return r
 }

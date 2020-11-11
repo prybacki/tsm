@@ -18,20 +18,22 @@ type DeviceWithId struct {
 
 type MessageErr struct {
 	Message string `json:"message"`
-	Error   string `json:"error"`
+	Code    string `json:"error"`
 }
+
+func (e *MessageErr) Error() string { return e.Message }
 
 func NewBadRequestError(message string) *MessageErr {
 	return &MessageErr{
 		Message: message,
-		Error:   badRequest,
+		Code:    badRequest,
 	}
 }
 
 func NewInternalServerError(message string) *MessageErr {
 	return &MessageErr{
 		Message: message,
-		Error:   serverError,
+		Code:    serverError,
 	}
 }
 

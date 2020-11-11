@@ -6,6 +6,14 @@ import (
 	"strconv"
 )
 
+type DeviceCreator interface {
+	Create(*Device) (*DeviceWithId, error)
+}
+
+type DeviceController struct {
+	DeviceService DeviceCreator
+}
+
 func (dc *DeviceController) HandlePost(w http.ResponseWriter, r *http.Request) {
 	var device Device
 	w.Header().Add("Content-Type", "application/json")
@@ -18,7 +26,7 @@ func (dc *DeviceController) HandlePost(w http.ResponseWriter, r *http.Request) {
 
 	deviceWithId, err := dc.DeviceService.Create(&device)
 	if err != nil {
-		switch err.Error {
+		switch err.(*MessageErr).Code {
 		case badRequest:
 			w.WriteHeader(http.StatusBadRequest)
 		case serverError:
