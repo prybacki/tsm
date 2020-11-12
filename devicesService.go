@@ -1,10 +1,11 @@
 package main
 
-type DeviceSaver interface {
+type DeviceRepo interface {
 	Save(*Device) (*DeviceWithId, error)
+	GetById(int) (*DeviceWithId, error)
 }
 type DeviceService struct {
-	DeviceRepo DeviceSaver
+	DeviceRepo DeviceRepo
 }
 
 func (ds *DeviceService) Create(device *Device) (*DeviceWithId, error) {
@@ -14,6 +15,17 @@ func (ds *DeviceService) Create(device *Device) (*DeviceWithId, error) {
 	d, err := ds.DeviceRepo.Save(device)
 	if err != nil {
 		return &DeviceWithId{}, NewInternalServerError("database error")
+	}
+	return d, nil
+}
+
+func (ds *DeviceService) Get(id int) (*DeviceWithId, error) {
+	d, err := ds.DeviceRepo.GetById(id)
+	if err != nil {
+		return &DeviceWithId{}, NewInternalServerError("database error")
+	}
+	if d.Device == nil {
+		return &DeviceWithId{}, NewNotFoundError("device not found")
 	}
 	return d, nil
 }

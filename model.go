@@ -3,6 +3,7 @@ package main
 const (
 	badRequest  = "bad_request"
 	serverError = "server_error"
+	notFound    = "not_found"
 )
 
 type Device struct {
@@ -34,6 +35,13 @@ func NewInternalServerError(message string) *MessageErr {
 	return &MessageErr{
 		Message: message,
 		Code:    serverError,
+	}
+}
+
+func NewNotFoundError(message string) *MessageErr {
+	return &MessageErr{
+		Message: message,
+		Code:    notFound,
 	}
 }
 

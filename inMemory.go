@@ -10,7 +10,7 @@ type inMemoryRepository struct {
 	devices map[int]DeviceWithId
 }
 
-func NewInMemRepo() DeviceSaver {
+func NewInMemRepo() DeviceRepo {
 	deviceRepo := inMemoryRepository{devices: make(map[int]DeviceWithId)}
 	return &deviceRepo
 }
@@ -23,4 +23,9 @@ func (r *inMemoryRepository) Save(device *Device) (*DeviceWithId, error) {
 	r.devices[deviceWithId.Id] = deviceWithId
 	r.mu.Unlock()
 	return &deviceWithId, nil
+}
+
+func (r *inMemoryRepository) GetById(id int) (*DeviceWithId, error) {
+	device := r.devices[id]
+	return &device, nil
 }
