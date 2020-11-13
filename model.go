@@ -17,6 +17,10 @@ type DeviceWithId struct {
 	*Device
 }
 
+type Message struct {
+	Message string `json:"message"`
+}
+
 type MessageErr struct {
 	Message string `json:"message"`
 	Code    string `json:"error"`
@@ -42,6 +46,12 @@ func NewNotFoundError(message string) *MessageErr {
 	return &MessageErr{
 		Message: message,
 		Code:    notFound,
+	}
+}
+
+func NewMessage(message string) *Message {
+	return &Message{
+		Message: message,
 	}
 }
 
