@@ -110,7 +110,7 @@ func TestGetDevice_DatabaseError(t *testing.T) {
 }
 
 func TestGetDevice_NotFoundError(t *testing.T) {
-	repoMock := repoMock{returnValue: &DeviceWithId{Id: 0}}
+	repoMock := repoMock{returnValue: nil}
 	sut := DeviceService{repoMock}
 
 	_, err := sut.Get(1)

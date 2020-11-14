@@ -26,6 +26,8 @@ func (r *inMemoryRepository) Save(device *Device) (*DeviceWithId, error) {
 }
 
 func (r *inMemoryRepository) GetById(id int) (*DeviceWithId, error) {
-	device := r.devices[id]
-	return &device, nil
+	if device, ok := r.devices[id]; ok {
+		return &device, nil
+	}
+	return nil, nil
 }

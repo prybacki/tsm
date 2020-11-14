@@ -7,13 +7,13 @@ import (
 	"strconv"
 )
 
-type IDeviceService interface {
+type deviceService interface {
 	Create(*Device) (*DeviceWithId, error)
 	Get(int) (*DeviceWithId, error)
 }
 
 type DeviceController struct {
-	DeviceService IDeviceService
+	DeviceService deviceService
 }
 
 func (dc *DeviceController) HandlePost(w http.ResponseWriter, r *http.Request) {
