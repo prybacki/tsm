@@ -15,7 +15,11 @@ func (r repoMock) Save(message *Device) (*DeviceWithId, error) {
 	return r.returnValue, r.error
 }
 
-func TestDevicesService_CreateDevice_Success(t *testing.T) {
+func (r repoMock) GetById(id int) (*DeviceWithId, error) {
+	return r.returnValue, r.error
+}
+
+func TestCreateDevice_Success(t *testing.T) {
 	sut := DeviceService{NewInMemRepo()}
 	device := &Device{
 		Name:     "test device",
@@ -32,7 +36,7 @@ func TestDevicesService_CreateDevice_Success(t *testing.T) {
 	assert.EqualValues(t, 2.3, d.Value)
 }
 
-func TestDevicesService_CreateDevice_Fail_Interval(t *testing.T) {
+func TestCreateDevice_FailInterval(t *testing.T) {
 	sut := DeviceService{NewInMemRepo()}
 	device := &Device{
 		Name:     "test device",
@@ -47,7 +51,7 @@ func TestDevicesService_CreateDevice_Fail_Interval(t *testing.T) {
 	assert.EqualValues(t, "bad_request", err.(*MessageErr).Code)
 }
 
-func TestDevicesService_CreateDevice_Fail_Name(t *testing.T) {
+func TestCreateDevice_FailName(t *testing.T) {
 	sut := DeviceService{NewInMemRepo()}
 	device := &Device{
 		Name:     "",
@@ -62,7 +66,7 @@ func TestDevicesService_CreateDevice_Fail_Name(t *testing.T) {
 	assert.EqualValues(t, "bad_request", err.(*MessageErr).Code)
 }
 
-func TestDevicesService_CreateDevice_Database_Error(t *testing.T) {
+func TestCreateDevice_DatabaseError(t *testing.T) {
 	repoMock := repoMock{error: errors.New("some error")}
 	sut := DeviceService{repoMock}
 
@@ -77,4 +81,41 @@ func TestDevicesService_CreateDevice_Database_Error(t *testing.T) {
 	assert.NotNil(t, err)
 	assert.EqualValues(t, "database error", err.Error())
 	assert.EqualValues(t, "server_error", err.(*MessageErr).Code)
+}
+
+//
+func TestGetDevice_Success(t *testing.T) {
+	repo := NewInMemRepo()
+	repo.Save(&Device{Name: "name", Interval: 5, Value: 1.4})
+	sut := DeviceService{repo}
+
+	d, err := sut.Get(1)
+
+	assert.Nil(t, err)
+	assert.EqualValues(t, 1, d.Id)
+	assert.EqualValues(t, "name", d.Name)
+	assert.EqualValues(t, 5, d.Interval)
+	assert.EqualValues(t, 1.4, d.Value)
+}
+
+func TestGetDevice_DatabaseError(t *testing.T) {
+	repoMock := repoMock{error: errors.New("some error")}
+	sut := DeviceService{repoMock}
+
+	_, err := sut.Get(1)
+
+	assert.NotNil(t, err)
+	assert.EqualValues(t, "database error", err.Error())
+	assert.EqualValues(t, "server_error", err.(*MessageErr).Code)
+}
+
+func TestGetDevice_NotFoundError(t *testing.T) {
+	repoMock := repoMock{returnValue: nil}
+	sut := DeviceService{repoMock}
+
+	_, err := sut.Get(1)
+
+	assert.NotNil(t, err)
+	assert.EqualValues(t, "device not found", err.Error())
+	assert.EqualValues(t, "not_found", err.(*MessageErr).Code)
 }

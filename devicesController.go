@@ -2,16 +2,18 @@ package main
 
 import (
 	"encoding/json"
+	"github.com/gorilla/mux"
 	"net/http"
 	"strconv"
 )
 
-type DeviceCreator interface {
+type deviceService interface {
 	Create(*Device) (*DeviceWithId, error)
+	Get(int) (*DeviceWithId, error)
 }
 
 type DeviceController struct {
-	DeviceService DeviceCreator
+	DeviceService deviceService
 }
 
 func (dc *DeviceController) HandlePost(w http.ResponseWriter, r *http.Request) {
@@ -38,5 +40,30 @@ func (dc *DeviceController) HandlePost(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Location", r.Host+r.URL.Path+"/"+strconv.Itoa(deviceWithId.Id))
 	w.WriteHeader(http.StatusCreated)
+	json.NewEncoder(w).Encode(deviceWithId)
+}
+
+func (dc *DeviceController) HandleGet(w http.ResponseWriter, r *http.Request) {
+	w.Header().Add("Content-Type", "application/json")
+	id := mux.Vars(r)["id"]
+	idInt, err := strconv.Atoi(id)
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(NewBadRequestError("id must be a string"))
+		return
+	}
+
+	deviceWithId, err := dc.DeviceService.Get(idInt)
+	if err != nil {
+		switch err.(*MessageErr).Code {
+		case notFound:
+			w.WriteHeader(http.StatusNotFound)
+		case serverError:
+			w.WriteHeader(http.StatusInternalServerError)
+		}
+		json.NewEncoder(w).Encode(err)
+		return
+	}
+	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(deviceWithId)
 }
