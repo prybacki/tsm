@@ -11,7 +11,7 @@ import (
 )
 
 type serviceMock struct {
-	returnValue *[]DeviceWithId
+	returnValue []DeviceWithId
 	returnError error
 }
 
@@ -19,18 +19,18 @@ func (s *serviceMock) Create(*Device) (*DeviceWithId, error) {
 	if s.returnValue == nil {
 		return nil, s.returnError
 	}
-	return &(*s.returnValue)[0], s.returnError
+	return &(s.returnValue)[0], s.returnError
 }
 
 func (s *serviceMock) GetById(int) (*DeviceWithId, error) {
 	if s.returnValue == nil {
 		return nil, s.returnError
 	}
-	return &(*s.returnValue)[0], s.returnError
+	return &(s.returnValue)[0], s.returnError
 
 }
 
-func (s *serviceMock) Get(int, int) (*[]DeviceWithId, error) {
+func (s *serviceMock) Get(int, int) ([]DeviceWithId, error) {
 	return s.returnValue, s.returnError
 
 }
@@ -204,7 +204,7 @@ func TestGetDevices_Pass_Empty(t *testing.T) {
 	require.JSONEq(t, `[]`, rr.Body.String())
 }
 
-func TestGetDevices_BadRequest(t *testing.T) {
+func TestGetDevices_BadRequest_Negative(t *testing.T) {
 	deviceController := DeviceController{&DeviceService{NewInMemRepo()}}
 	req, err := http.NewRequest(http.MethodGet, "/devices", nil)
 	q := req.URL.Query()
@@ -221,7 +221,7 @@ func TestGetDevices_BadRequest(t *testing.T) {
 	require.JSONEq(t, `{"error":"bad_request", "message":"negative limit or page"}`, rr.Body.String())
 }
 
-func TestGetDevices_NotFound(t *testing.T) {
+func TestGetDevices_BadRequest_String(t *testing.T) {
 	deviceController := DeviceController{&DeviceService{NewInMemRepo()}}
 	req, err := http.NewRequest(http.MethodGet, "/devices", nil)
 	q := req.URL.Query()
@@ -234,8 +234,8 @@ func TestGetDevices_NotFound(t *testing.T) {
 	handler := http.HandlerFunc(deviceController.HandleDevicesGet)
 	handler.ServeHTTP(rr, req)
 
-	assert.EqualValues(t, http.StatusNotFound, rr.Code)
-	require.JSONEq(t, `{"error":"not_found", "message":"given string value in limit or page query parameters"}`, rr.Body.String())
+	assert.EqualValues(t, http.StatusBadRequest, rr.Code)
+	require.JSONEq(t, `{"error":"bad_request", "message":"given string value in limit or page query parameters"}`, rr.Body.String())
 }
 
 func TestGetDevices_InternalServerError(t *testing.T) {

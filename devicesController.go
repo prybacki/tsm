@@ -15,7 +15,7 @@ const (
 type deviceService interface {
 	Create(*Device) (*DeviceWithId, error)
 	GetById(int) (*DeviceWithId, error)
-	Get(int, int) (*[]DeviceWithId, error)
+	Get(int, int) ([]DeviceWithId, error)
 }
 
 type DeviceController struct {
@@ -80,8 +80,8 @@ func (dc *DeviceController) HandleDevicesGet(w http.ResponseWriter, r *http.Requ
 	lErr := dc.readIntQueryParam(r, "limit", &limit)
 	pErr := dc.readIntQueryParam(r, "page", &page)
 	if lErr != nil || pErr != nil {
-		w.WriteHeader(http.StatusNotFound)
-		json.NewEncoder(w).Encode(NewNotFoundError("given string value in limit or page query parameters"))
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(NewBadRequestError("given string value in limit or page query parameters"))
 		return
 	}
 

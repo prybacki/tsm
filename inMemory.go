@@ -34,11 +34,11 @@ func (r *inMemoryRepository) GetById(id int) (*DeviceWithId, error) {
 	return nil, nil
 }
 
-func (r *inMemoryRepository) Get(limit int, page int) (*[]DeviceWithId, error) {
+func (r *inMemoryRepository) Get(limit int, page int) ([]DeviceWithId, error) {
 	start := limit * page
 	end := limit * (page + 1)
 	if start > len(r.keys) {
-		return &[]DeviceWithId{}, nil
+		return []DeviceWithId{}, nil
 	}
 
 	var k []int
@@ -55,5 +55,5 @@ func (r *inMemoryRepository) Get(limit int, page int) (*[]DeviceWithId, error) {
 	for _, value := range k {
 		v = append(v, r.devices[value])
 	}
-	return &v, nil
+	return v, nil
 }

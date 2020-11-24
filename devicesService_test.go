@@ -7,7 +7,7 @@ import (
 )
 
 type repoMock struct {
-	returnValue *[]DeviceWithId
+	returnValue []DeviceWithId
 	error
 }
 
@@ -15,17 +15,17 @@ func (r repoMock) Save(*Device) (*DeviceWithId, error) {
 	if r.returnValue == nil {
 		return nil, r.error
 	}
-	return &(*r.returnValue)[0], r.error
+	return &(r.returnValue)[0], r.error
 }
 
 func (r repoMock) GetById(int) (*DeviceWithId, error) {
 	if r.returnValue == nil {
 		return nil, r.error
 	}
-	return &(*r.returnValue)[0], r.error
+	return &(r.returnValue)[0], r.error
 }
 
-func (r repoMock) Get(int, int) (*[]DeviceWithId, error) {
+func (r repoMock) Get(int, int) ([]DeviceWithId, error) {
 	return r.returnValue, r.error
 }
 
@@ -170,8 +170,8 @@ func TestGetDevices_Success(t *testing.T) {
 	for _, v := range limitAndPageTests {
 		d, err := sut.Get(v.limit, v.page)
 		assert.Nil(t, err)
-		assert.EqualValues(t, v.expectedSize, len(*d))
-		assert.EqualValues(t, v.expectedNames, nameList(*d))
+		assert.EqualValues(t, v.expectedSize, len(d))
+		assert.EqualValues(t, v.expectedNames, nameList(d))
 	}
 }
 
