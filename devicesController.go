@@ -7,16 +7,22 @@ import (
 	"strconv"
 )
 
+const (
+	defaultLimit = 100
+	defaultPage  = 0
+)
+
 type deviceService interface {
 	Create(*Device) (*DeviceWithId, error)
-	Get(int) (*DeviceWithId, error)
+	GetById(int) (*DeviceWithId, error)
+	Get(int, int) ([]DeviceWithId, error)
 }
 
 type DeviceController struct {
 	DeviceService deviceService
 }
 
-func (dc *DeviceController) HandlePost(w http.ResponseWriter, r *http.Request) {
+func (dc *DeviceController) HandleDevicesPost(w http.ResponseWriter, r *http.Request) {
 	var device Device
 	w.Header().Add("Content-Type", "application/json")
 	if err := json.NewDecoder(r.Body).Decode(&device); err != nil {
@@ -43,7 +49,7 @@ func (dc *DeviceController) HandlePost(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(deviceWithId)
 }
 
-func (dc *DeviceController) HandleGet(w http.ResponseWriter, r *http.Request) {
+func (dc *DeviceController) HandleDeviceGet(w http.ResponseWriter, r *http.Request) {
 	w.Header().Add("Content-Type", "application/json")
 	id := mux.Vars(r)["id"]
 	idInt, err := strconv.Atoi(id)
@@ -53,7 +59,7 @@ func (dc *DeviceController) HandleGet(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	deviceWithId, err := dc.DeviceService.Get(idInt)
+	deviceWithId, err := dc.DeviceService.GetById(idInt)
 	if err != nil {
 		switch err.(*MessageErr).Code {
 		case notFound:
@@ -66,4 +72,42 @@ func (dc *DeviceController) HandleGet(w http.ResponseWriter, r *http.Request) {
 	}
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(deviceWithId)
+}
+
+func (dc *DeviceController) HandleDevicesGet(w http.ResponseWriter, r *http.Request) {
+	w.Header().Add("Content-Type", "application/json")
+	limit, page := defaultLimit, defaultPage
+	lErr := dc.readIntQueryParam(r, "limit", &limit)
+	pErr := dc.readIntQueryParam(r, "page", &page)
+	if lErr != nil || pErr != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(NewBadRequestError("given string value in limit or page query parameters"))
+		return
+	}
+
+	deviceWithId, err := dc.DeviceService.Get(limit, page)
+	if err != nil {
+		switch err.(*MessageErr).Code {
+		case badRequest:
+			w.WriteHeader(http.StatusBadRequest)
+		case serverError:
+			w.WriteHeader(http.StatusInternalServerError)
+		}
+		json.NewEncoder(w).Encode(err)
+		return
+	}
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(deviceWithId)
+}
+
+func (dc *DeviceController) readIntQueryParam(r *http.Request, param string, result *int) error {
+	paramS := r.URL.Query().Get(param)
+	if paramS != "" {
+		param, lErr := strconv.Atoi(paramS)
+		if lErr != nil {
+			return lErr
+		}
+		*result = param
+	}
+	return nil
 }

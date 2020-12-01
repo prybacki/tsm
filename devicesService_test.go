@@ -7,18 +7,29 @@ import (
 )
 
 type repoMock struct {
-	returnValue *DeviceWithId
+	returnValue []DeviceWithId
 	error
 }
 
-func (r repoMock) Save(message *Device) (*DeviceWithId, error) {
+func (r repoMock) Save(*Device) (*DeviceWithId, error) {
+	if r.returnValue == nil {
+		return nil, r.error
+	}
+	return &(r.returnValue)[0], r.error
+}
+
+func (r repoMock) GetById(int) (*DeviceWithId, error) {
+	if r.returnValue == nil {
+		return nil, r.error
+	}
+	return &(r.returnValue)[0], r.error
+}
+
+func (r repoMock) Get(int, int) ([]DeviceWithId, error) {
 	return r.returnValue, r.error
 }
 
-func (r repoMock) GetById(id int) (*DeviceWithId, error) {
-	return r.returnValue, r.error
-}
-
+//test Create
 func TestCreateDevice_Success(t *testing.T) {
 	sut := DeviceService{NewInMemRepo()}
 	device := &Device{
@@ -83,13 +94,13 @@ func TestCreateDevice_DatabaseError(t *testing.T) {
 	assert.EqualValues(t, "server_error", err.(*MessageErr).Code)
 }
 
-//
+//test GetById
 func TestGetDevice_Success(t *testing.T) {
 	repo := NewInMemRepo()
 	repo.Save(&Device{Name: "name", Interval: 5, Value: 1.4})
 	sut := DeviceService{repo}
 
-	d, err := sut.Get(1)
+	d, err := sut.GetById(1)
 
 	assert.Nil(t, err)
 	assert.EqualValues(t, 1, d.Id)
@@ -102,7 +113,7 @@ func TestGetDevice_DatabaseError(t *testing.T) {
 	repoMock := repoMock{error: errors.New("some error")}
 	sut := DeviceService{repoMock}
 
-	_, err := sut.Get(1)
+	_, err := sut.GetById(1)
 
 	assert.NotNil(t, err)
 	assert.EqualValues(t, "database error", err.Error())
@@ -113,9 +124,61 @@ func TestGetDevice_NotFoundError(t *testing.T) {
 	repoMock := repoMock{returnValue: nil}
 	sut := DeviceService{repoMock}
 
-	_, err := sut.Get(1)
+	_, err := sut.GetById(1)
 
 	assert.NotNil(t, err)
 	assert.EqualValues(t, "device not found", err.Error())
 	assert.EqualValues(t, "not_found", err.(*MessageErr).Code)
+}
+
+//test Get
+
+var limitAndPageTests = []struct {
+	limit         int
+	page          int
+	expectedSize  int
+	expectedNames []string
+}{
+	{0, 0, 3, []string{"name1", "name2", "name3"}},
+	{0, 1, 3, []string{"name1", "name2", "name3"}},
+	{0, 2, 3, []string{"name1", "name2", "name3"}},
+	{0, 3, 3, []string{"name1", "name2", "name3"}},
+
+	{1, 0, 1, []string{"name1"}},
+	{1, 1, 1, []string{"name2"}},
+	{1, 2, 1, []string{"name3"}},
+	{1, 3, 0, nil},
+
+	{2, 0, 2, []string{"name1", "name2"}},
+	{2, 1, 1, []string{"name3"}},
+	{2, 2, 0, nil},
+
+	{3, 0, 3, []string{"name1", "name2", "name3"}},
+	{3, 1, 0, nil},
+
+	{4, 0, 3, []string{"name1", "name2", "name3"}},
+	{4, 1, 0, nil},
+}
+
+func TestGetDevices_Success(t *testing.T) {
+	repo := NewInMemRepo()
+	repo.Save(&Device{Name: "name1"})
+	repo.Save(&Device{Name: "name2"})
+	repo.Save(&Device{Name: "name3"})
+	sut := DeviceService{repo}
+
+	for _, v := range limitAndPageTests {
+		d, err := sut.Get(v.limit, v.page)
+		assert.Nil(t, err)
+		assert.EqualValues(t, v.expectedSize, len(d))
+		assert.EqualValues(t, v.expectedNames, nameList(d))
+	}
+}
+
+func nameList(devices []DeviceWithId) []string {
+	var result []string
+	for _, d := range devices {
+		result = append(result, d.Name)
+	}
+	return result
 }
