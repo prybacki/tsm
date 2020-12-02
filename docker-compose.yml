@@ -1,11 +1,22 @@
-version: '3.7'
+version: "3.7"
 
 services:
+  influxdb:
+    image: influxdb:latest
+    container_name: influxdb
+    ports:
+      - "8086:8086"
+
   tsm:
     image: tsm
-    env_file: 
+    env_file:
       - .env
+    environment:
+      - INFLUX_HOST=influxdb
     build: .
     container_name: tsm
     ports:
       - ${TSM_PORT}:${TSM_PORT}
+    links:
+      - influxdb
+    restart: on-failure
