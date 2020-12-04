@@ -1,6 +1,7 @@
 package main
 
 import (
+	"sync"
 	"time"
 )
 
@@ -13,6 +14,7 @@ type TickerService struct {
 	measurement   chan Measurement
 	isRunning     bool
 	stop          chan struct{}
+	mu            sync.Mutex
 	Ticker
 }
 
@@ -24,6 +26,8 @@ type Measurement struct {
 }
 
 func (ts *TickerService) Start() (started bool, error error) {
+	ts.mu.Lock()
+	defer ts.mu.Unlock()
 	if !ts.isRunning {
 		ts.isRunning = true
 		deviceWithId, err := ts.DeviceService.Get(0, 0)
@@ -39,6 +43,8 @@ func (ts *TickerService) Start() (started bool, error error) {
 }
 
 func (ts *TickerService) Stop() (stopped bool, error error) {
+	ts.mu.Lock()
+	defer ts.mu.Unlock()
 	if ts.isRunning {
 		ts.isRunning = false
 		close(ts.stop)
