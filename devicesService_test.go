@@ -3,6 +3,7 @@ package main
 import (
 	"errors"
 	"github.com/stretchr/testify/assert"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"testing"
 )
 
@@ -11,14 +12,14 @@ type repoMock struct {
 	error
 }
 
-func (r repoMock) Save(*Device) (*DeviceWithId, error) {
+func (r repoMock) Save(*Device, string) (*DeviceWithId, error) {
 	if r.returnValue == nil {
 		return nil, r.error
 	}
 	return &(r.returnValue)[0], r.error
 }
 
-func (r repoMock) GetById(int) (*DeviceWithId, error) {
+func (r repoMock) GetById(string) (*DeviceWithId, error) {
 	if r.returnValue == nil {
 		return nil, r.error
 	}
@@ -41,7 +42,9 @@ func TestCreateDevice_Success(t *testing.T) {
 	d, err := sut.Create(device)
 
 	assert.Nil(t, err)
-	assert.EqualValues(t, 1, d.Id)
+	resultId, err := primitive.ObjectIDFromHex(d.Id)
+	assert.NoError(t, err)
+	assert.IsType(t, primitive.ObjectID{}, resultId)
 	assert.EqualValues(t, "test device", d.Name)
 	assert.EqualValues(t, 50, d.Interval)
 	assert.EqualValues(t, 2.3, d.Value)
@@ -96,14 +99,15 @@ func TestCreateDevice_DatabaseError(t *testing.T) {
 
 //test GetById
 func TestGetDevice_Success(t *testing.T) {
+	id := primitive.NewObjectID().Hex()
 	repo := NewInMemRepo()
-	repo.Save(&Device{Name: "name", Interval: 5, Value: 1.4})
+	repo.Save(&Device{Name: "name", Interval: 5, Value: 1.4}, id)
 	sut := DeviceService{repo}
 
-	d, err := sut.GetById(1)
+	d, err := sut.GetById(id)
 
 	assert.Nil(t, err)
-	assert.EqualValues(t, 1, d.Id)
+	assert.EqualValues(t, id, d.Id)
 	assert.EqualValues(t, "name", d.Name)
 	assert.EqualValues(t, 5, d.Interval)
 	assert.EqualValues(t, 1.4, d.Value)
@@ -113,7 +117,7 @@ func TestGetDevice_DatabaseError(t *testing.T) {
 	repoMock := repoMock{error: errors.New("some error")}
 	sut := DeviceService{repoMock}
 
-	_, err := sut.GetById(1)
+	_, err := sut.GetById(primitive.NewObjectID().Hex())
 
 	assert.NotNil(t, err)
 	assert.EqualValues(t, "database error", err.Error())
@@ -124,7 +128,7 @@ func TestGetDevice_NotFoundError(t *testing.T) {
 	repoMock := repoMock{returnValue: nil}
 	sut := DeviceService{repoMock}
 
-	_, err := sut.GetById(1)
+	_, err := sut.GetById(primitive.NewObjectID().Hex())
 
 	assert.NotNil(t, err)
 	assert.EqualValues(t, "device not found", err.Error())
@@ -162,9 +166,9 @@ var limitAndPageTests = []struct {
 
 func TestGetDevices_Success(t *testing.T) {
 	repo := NewInMemRepo()
-	repo.Save(&Device{Name: "name1"})
-	repo.Save(&Device{Name: "name2"})
-	repo.Save(&Device{Name: "name3"})
+	repo.Save(&Device{Name: "name1"}, primitive.NewObjectID().Hex())
+	repo.Save(&Device{Name: "name2"}, primitive.NewObjectID().Hex())
+	repo.Save(&Device{Name: "name3"}, primitive.NewObjectID().Hex())
 	sut := DeviceService{repo}
 
 	for _, v := range limitAndPageTests {

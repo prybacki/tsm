@@ -6,28 +6,26 @@ import (
 
 type inMemoryRepository struct {
 	mu      sync.Mutex
-	id      int
-	devices map[int]DeviceWithId
-	keys    []int
+	devices map[string]DeviceWithId
+	keys    []string
 }
 
 func NewInMemRepo() DeviceRepo {
-	deviceRepo := inMemoryRepository{devices: make(map[int]DeviceWithId)}
+	deviceRepo := inMemoryRepository{devices: make(map[string]DeviceWithId)}
 	return &deviceRepo
 }
 
-func (r *inMemoryRepository) Save(device *Device) (*DeviceWithId, error) {
+func (r *inMemoryRepository) Save(device *Device, id string) (*DeviceWithId, error) {
 	deviceWithId := DeviceWithId{Device: device}
+	deviceWithId.Id = id
 	r.mu.Lock()
-	r.id++
-	r.keys = append(r.keys, r.id)
-	deviceWithId.Id = r.id
+	r.keys = append(r.keys, id)
 	r.devices[deviceWithId.Id] = deviceWithId
 	r.mu.Unlock()
 	return &deviceWithId, nil
 }
 
-func (r *inMemoryRepository) GetById(id int) (*DeviceWithId, error) {
+func (r *inMemoryRepository) GetById(id string) (*DeviceWithId, error) {
 	if device, ok := r.devices[id]; ok {
 		return &device, nil
 	}
@@ -41,7 +39,7 @@ func (r *inMemoryRepository) Get(limit int, page int) ([]DeviceWithId, error) {
 		return []DeviceWithId{}, nil
 	}
 
-	var k []int
+	var k []string
 	switch {
 	case limit == 0:
 		k = r.keys[:]

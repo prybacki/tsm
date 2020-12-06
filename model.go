@@ -13,7 +13,7 @@ type Device struct {
 }
 
 type DeviceWithId struct {
-	Id int `json:"id"`
+	Id string `json:"id"`
 	*Device
 }
 

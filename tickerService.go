@@ -21,7 +21,7 @@ type TickerService struct {
 type MeasurementTicker struct{}
 
 type Measurement struct {
-	Id    int
+	Id    string
 	Value float64
 }
 
