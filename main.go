@@ -13,13 +13,14 @@ func main() {
 	connectionString := "http://" + os.Getenv("INFLUX_HOST") + ":" + os.Getenv("INFLUX_PORT")
 	client := influxdb2.NewClientWithOptions(connectionString, "", influxdb2.DefaultOptions().SetPrecision(time.Second))
 	if _, err := client.Health(context.Background()); err != nil {
+		log.Print(err)
 		panic("Cannot connect to influxdb")
 	}
 	writeAPI := client.WriteAPIBlocking("", os.Getenv("INFLUX_DB"))
 
 	m := make(chan Measurement)
 	mw := MeasurementWriter{writeAPI, m}
-	go mw.StoreMeasurement()
+	go mw.Start()
 
 	deviceService := &DeviceService{NewInMemRepo()}
 	deviceController := DeviceController{deviceService}
