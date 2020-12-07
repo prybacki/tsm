@@ -14,7 +14,6 @@ func main() {
 	client := influxdb2.NewClientWithOptions(connectionString, "", influxdb2.DefaultOptions().SetPrecision(time.Second))
 	if _, err := client.Health(context.Background()); err != nil {
 		log.Print(err)
-		panic("Cannot connect to influxdb")
 	}
 	writeAPI := client.WriteAPIBlocking("", os.Getenv("INFLUX_DB"))
 
@@ -24,7 +23,7 @@ func main() {
 
 	deviceService := &DeviceService{NewInMemRepo()}
 	deviceController := DeviceController{deviceService}
-	tickerController := TickerController{&TickerService{DeviceService: *deviceService, measurement: m, stop: make(chan struct{}), Ticker: &MeasurementTicker{}}}
+	tickerController := TickerController{&TickerService{DeviceService: *deviceService, measurement: m, Ticker: &MeasurementTicker{}}}
 	r := SetupRouter(deviceController, tickerController)
 
 	port := os.Getenv("TSM_PORT")
