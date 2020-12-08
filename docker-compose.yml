@@ -11,14 +11,25 @@ services:
     environment:
       INFLUXDB_DB: ${INFLUX_DB}
 
+  rabbitmq:
+    image: library/rabbitmq:3.8.9
+    container_name: rabbitmq
+    ports:
+      - 5672:5672
+    networks:
+      - tsm
+
   tsm:
-    image: tsm
+    build: .
     env_file:
       - .env
     environment:
       - INFLUX_HOST=influxdb
-    build: .
+      - RABBIT_HOST=rabbitmq
     container_name: tsm
+    depends_on:
+      - influxdb
+      - rabbitmq
     ports:
       - ${TSM_PORT}:${TSM_PORT}
     networks:
