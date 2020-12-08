@@ -1,6 +1,10 @@
 package main
 
 import (
+	"fmt"
+	"github.com/streadway/amqp"
+	"log"
+	"strconv"
 	"sync"
 	"time"
 )
@@ -11,7 +15,7 @@ type Ticker interface {
 
 type TickerService struct {
 	DeviceService DeviceService
-	measurement   chan Measurement
+	channel       *amqp.Channel
 	isRunning     bool
 	stop          chan struct{}
 	mu            sync.Mutex
@@ -60,7 +64,18 @@ func (mt *MeasurementTicker) Tick(device DeviceWithId, ts TickerService) {
 	for {
 		select {
 		case <-t.C:
-			ts.measurement <- Measurement{Id: device.Id, Value: float64(device.Value)}
+			err := ts.channel.Publish(
+				"measurement",           // exchange
+				strconv.Itoa(device.Id), // routing key
+				false,                   // mandatory
+				false,                   // immediate
+				amqp.Publishing{
+					ContentType: "text/plain",
+					Body:        []byte(fmt.Sprintf("%f", device.Value)),
+				})
+			if err != nil {
+				log.Println(err)
+			}
 		case <-ts.stop:
 			return
 		}
