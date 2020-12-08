@@ -1,19 +1,29 @@
 package main
 
 import (
+	"context"
+	influxdb2 "github.com/influxdata/influxdb-client-go/v2"
 	"log"
 	"net/http"
 	"os"
+	"time"
 )
 
 func main() {
+	connectionString := "http://" + os.Getenv("INFLUX_HOST") + ":" + os.Getenv("INFLUX_PORT")
+	client := influxdb2.NewClientWithOptions(connectionString, "", influxdb2.DefaultOptions().SetPrecision(time.Second))
+	if _, err := client.Health(context.Background()); err != nil {
+		log.Print(err)
+	}
+	writeAPI := client.WriteAPIBlocking("", os.Getenv("INFLUX_DB"))
+
 	m := make(chan Measurement)
-	mw := MeasurementPrintWriter{measurement: m}
-	go mw.ReadMeasurement()
+	mw := MeasurementWriter{writeAPI, m}
+	go mw.Start()
 
 	deviceService := &DeviceService{NewInMemRepo()}
 	deviceController := DeviceController{deviceService}
-	tickerController := TickerController{&TickerService{DeviceService: *deviceService, measurement: m, stop: make(chan struct{}), Ticker: &MeasurementTicker{}}}
+	tickerController := TickerController{&TickerService{DeviceService: *deviceService, measurement: m, Ticker: &MeasurementTicker{}}}
 	r := SetupRouter(deviceController, tickerController)
 
 	port := os.Getenv("TSM_PORT")

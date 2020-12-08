@@ -29,6 +29,7 @@ func (ts *TickerService) Start() (started bool, error error) {
 	ts.mu.Lock()
 	defer ts.mu.Unlock()
 	if !ts.isRunning {
+		ts.stop = make(chan struct{})
 		ts.isRunning = true
 		deviceWithId, err := ts.DeviceService.Get(0, 0)
 		if err != nil {

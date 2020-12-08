@@ -1,14 +1,29 @@
 package main
 
-import "fmt"
+import (
+	"context"
+	"github.com/influxdata/influxdb-client-go/v2"
+	"github.com/influxdata/influxdb-client-go/v2/api"
+	"log"
+	"strconv"
+	"time"
+)
 
-type MeasurementPrintWriter struct {
+type MeasurementWriter struct {
+	writeApi    api.WriteAPIBlocking
 	measurement chan Measurement
 }
 
-func (mw *MeasurementPrintWriter) ReadMeasurement() error {
+func (mw *MeasurementWriter) Start() {
 	for {
 		m := <-mw.measurement
-		fmt.Println("Id:", m.Id, "Value: ", m.Value)
+		p := influxdb2.NewPointWithMeasurement("deviceValues").
+			AddTag("id", strconv.Itoa(m.Id)).
+			AddField("value", m.Value).
+			SetTime(time.Now())
+		err := mw.writeApi.WritePoint(context.Background(), p)
+		if err != nil {
+			log.Print(err)
+		}
 	}
 }

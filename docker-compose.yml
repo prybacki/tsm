@@ -1,11 +1,30 @@
-version: '3.7'
+version: "3.7"
 
 services:
+  influxdb:
+    image: library/influxdb:1.8
+    container_name: influxdb
+    ports:
+      - "8086:8086"
+    networks:
+      - tsm
+    environment:
+      INFLUXDB_DB: ${INFLUX_DB}
+
   tsm:
     image: tsm
-    env_file: 
+    env_file:
       - .env
+    environment:
+      - INFLUX_HOST=influxdb
     build: .
     container_name: tsm
     ports:
       - ${TSM_PORT}:${TSM_PORT}
+    networks:
+      - tsm
+    restart: on-failure
+
+networks:
+  tsm:
+    driver: "bridge"
