@@ -3,6 +3,8 @@ package main
 import (
 	"context"
 	influxdb2 "github.com/influxdata/influxdb-client-go/v2"
+	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 	"log"
 	"net/http"
 	"os"
@@ -10,18 +12,24 @@ import (
 )
 
 func main() {
-	connectionString := "http://" + os.Getenv("INFLUX_HOST") + ":" + os.Getenv("INFLUX_PORT")
-	client := influxdb2.NewClientWithOptions(connectionString, "", influxdb2.DefaultOptions().SetPrecision(time.Second))
+	influxCS := "http://" + os.Getenv("INFLUX_HOST") + ":" + os.Getenv("INFLUX_PORT")
+	client := influxdb2.NewClientWithOptions(influxCS, "", influxdb2.DefaultOptions().SetPrecision(time.Second))
 	if _, err := client.Health(context.Background()); err != nil {
 		log.Print(err)
 	}
 	writeAPI := client.WriteAPIBlocking("", os.Getenv("INFLUX_DB"))
 
+	mongoCS := "mongodb://" + os.Getenv("MONGO_HOST") + ":" + os.Getenv("MONGO_PORT")
+	mongoClient, err := mongo.Connect(context.Background(), options.Client().ApplyURI(mongoCS))
+	if err != nil {
+		log.Print(err)
+	}
+
 	m := make(chan Measurement)
 	mw := MeasurementWriter{writeAPI, m}
 	go mw.Start()
 
-	deviceService := &DeviceService{NewInMemRepo()}
+	deviceService := &DeviceService{&MongoDbRepository{*mongoClient}}
 	deviceController := DeviceController{deviceService}
 	tickerController := TickerController{&TickerService{DeviceService: *deviceService, measurement: m, Ticker: &MeasurementTicker{}}}
 	r := SetupRouter(deviceController, tickerController)

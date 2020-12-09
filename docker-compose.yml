@@ -11,12 +11,20 @@ services:
     environment:
       INFLUXDB_DB: ${INFLUX_DB}
 
+  mongodb:
+    image: library/mongo:latest
+    container_name: mongodb
+    ports:
+      - "27017:27017"
+    networks:
+      - tsm
+
   tsm:
-    image: tsm
     env_file:
       - .env
     environment:
       - INFLUX_HOST=influxdb
+      - MONGO_HOST=mongodb
     build: .
     container_name: tsm
     ports:

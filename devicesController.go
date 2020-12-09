@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"github.com/gorilla/mux"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"net/http"
 	"strconv"
 )
@@ -14,7 +15,7 @@ const (
 
 type deviceService interface {
 	Create(*Device) (*DeviceWithId, error)
-	GetById(int) (*DeviceWithId, error)
+	GetById(string) (*DeviceWithId, error)
 	Get(int, int) ([]DeviceWithId, error)
 }
 
@@ -44,7 +45,7 @@ func (dc *DeviceController) HandleDevicesPost(w http.ResponseWriter, r *http.Req
 		return
 	}
 
-	w.Header().Set("Location", r.Host+r.URL.Path+"/"+strconv.Itoa(deviceWithId.Id))
+	w.Header().Set("Location", r.Host+r.URL.Path+"/"+deviceWithId.Id)
 	w.WriteHeader(http.StatusCreated)
 	json.NewEncoder(w).Encode(deviceWithId)
 }
@@ -52,14 +53,14 @@ func (dc *DeviceController) HandleDevicesPost(w http.ResponseWriter, r *http.Req
 func (dc *DeviceController) HandleDeviceGet(w http.ResponseWriter, r *http.Request) {
 	w.Header().Add("Content-Type", "application/json")
 	id := mux.Vars(r)["id"]
-	idInt, err := strconv.Atoi(id)
+	_, err := primitive.ObjectIDFromHex(id)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(NewBadRequestError("id must be a string"))
+		json.NewEncoder(w).Encode(NewBadRequestError("id must be a hex string"))
 		return
 	}
 
-	deviceWithId, err := dc.DeviceService.GetById(idInt)
+	deviceWithId, err := dc.DeviceService.GetById(id)
 	if err != nil {
 		switch err.(*MessageErr).Code {
 		case notFound:

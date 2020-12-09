@@ -1,10 +1,12 @@
 package main
 
-import "log"
+import (
+	"log"
+)
 
 type DeviceRepo interface {
 	Save(*Device) (*DeviceWithId, error)
-	GetById(int) (*DeviceWithId, error)
+	GetById(string) (*DeviceWithId, error)
 	Get(int, int) ([]DeviceWithId, error)
 }
 
@@ -24,7 +26,7 @@ func (ds *DeviceService) Create(device *Device) (*DeviceWithId, error) {
 	return d, nil
 }
 
-func (ds *DeviceService) GetById(id int) (*DeviceWithId, error) {
+func (ds *DeviceService) GetById(id string) (*DeviceWithId, error) {
 	d, err := ds.DeviceRepo.GetById(id)
 	if err != nil {
 		log.Println("Error during get device by id: ", err.Error())

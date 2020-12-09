@@ -7,13 +7,13 @@ const (
 )
 
 type Device struct {
-	Name     string  `json:"name"`
-	Interval int     `json:"interval"`
-	Value    float32 `json:"value"`
+	Name     string  `json:"name" bson:"name"`
+	Interval int     `json:"interval" bson:"interval"`
+	Value    float32 `json:"value" bson:"value"`
 }
 
 type DeviceWithId struct {
-	Id int `json:"id"`
+	Id string `json:"id" bson:"_id"`
 	*Device
 }
 
