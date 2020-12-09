@@ -12,7 +12,7 @@ type repoMock struct {
 	error
 }
 
-func (r repoMock) Save(*Device, string) (*DeviceWithId, error) {
+func (r repoMock) Save(*Device) (*DeviceWithId, error) {
 	if r.returnValue == nil {
 		return nil, r.error
 	}
@@ -99,15 +99,13 @@ func TestCreateDevice_DatabaseError(t *testing.T) {
 
 //test GetById
 func TestGetDevice_Success(t *testing.T) {
-	id := primitive.NewObjectID().Hex()
 	repo := NewInMemRepo()
-	repo.Save(&Device{Name: "name", Interval: 5, Value: 1.4}, id)
+	d, _ := repo.Save(&Device{Name: "name", Interval: 5, Value: 1.4})
 	sut := DeviceService{repo}
 
-	d, err := sut.GetById(id)
+	d, err := sut.GetById(d.Id)
 
 	assert.Nil(t, err)
-	assert.EqualValues(t, id, d.Id)
 	assert.EqualValues(t, "name", d.Name)
 	assert.EqualValues(t, 5, d.Interval)
 	assert.EqualValues(t, 1.4, d.Value)
@@ -166,9 +164,9 @@ var limitAndPageTests = []struct {
 
 func TestGetDevices_Success(t *testing.T) {
 	repo := NewInMemRepo()
-	repo.Save(&Device{Name: "name1"}, primitive.NewObjectID().Hex())
-	repo.Save(&Device{Name: "name2"}, primitive.NewObjectID().Hex())
-	repo.Save(&Device{Name: "name3"}, primitive.NewObjectID().Hex())
+	repo.Save(&Device{Name: "name1"})
+	repo.Save(&Device{Name: "name2"})
+	repo.Save(&Device{Name: "name3"})
 	sut := DeviceService{repo}
 
 	for _, v := range limitAndPageTests {

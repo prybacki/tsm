@@ -1,6 +1,7 @@
 package main
 
 import (
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"sync"
 )
 
@@ -15,7 +16,8 @@ func NewInMemRepo() DeviceRepo {
 	return &deviceRepo
 }
 
-func (r *inMemoryRepository) Save(device *Device, id string) (*DeviceWithId, error) {
+func (r *inMemoryRepository) Save(device *Device) (*DeviceWithId, error) {
+	id := primitive.NewObjectID().Hex()
 	deviceWithId := DeviceWithId{Device: device}
 	deviceWithId.Id = id
 	r.mu.Lock()

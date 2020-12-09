@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	influxdb2 "github.com/influxdata/influxdb-client-go/v2"
-	"context"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"log"

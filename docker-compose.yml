@@ -20,7 +20,6 @@ services:
       - tsm
 
   tsm:
-    image: tsm
     env_file:
       - .env
     environment:

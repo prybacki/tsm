@@ -110,13 +110,12 @@ func TestCreateDevice_InternalServerError(t *testing.T) {
 
 //test GET /devices/{id}
 func TestGetDevice_Pass(t *testing.T) {
-	id := primitive.NewObjectID().Hex()
 	repo := NewInMemRepo()
-	repo.Save(&Device{Name: "name", Interval: 5, Value: 1.4}, id)
+	d, _ := repo.Save(&Device{Name: "name", Interval: 5, Value: 1.4})
 	deviceController := DeviceController{&DeviceService{repo}}
 	req, err := http.NewRequest(http.MethodGet, "/devices", nil)
 	req = mux.SetURLVars(req, map[string]string{
-		"id": id,
+		"id": d.Id,
 	})
 	if err != nil {
 		t.Fatal(err)
@@ -126,7 +125,7 @@ func TestGetDevice_Pass(t *testing.T) {
 	handler.ServeHTTP(rr, req)
 
 	assert.EqualValues(t, http.StatusOK, rr.Code)
-	require.JSONEq(t, "{\"id\":\""+id+"\", \"interval\":5, \"name\":\"name\", \"value\":1.4}", rr.Body.String())
+	require.JSONEq(t, "{\"id\":\""+d.Id+"\", \"interval\":5, \"name\":\"name\", \"value\":1.4}", rr.Body.String())
 }
 
 func TestGetDevice_BadRequest(t *testing.T) {
@@ -185,11 +184,9 @@ func TestGetDevice_InternalServerError(t *testing.T) {
 
 //test GET /devices
 func TestGetDevices_Pass(t *testing.T) {
-	id1 := primitive.NewObjectID().Hex()
-	id2 := primitive.NewObjectID().Hex()
 	repo := NewInMemRepo()
-	repo.Save(&Device{Name: "name1", Interval: 5, Value: 1.4}, id1)
-	repo.Save(&Device{Name: "name2", Interval: 10, Value: 2.4}, id2)
+	d1, _ := repo.Save(&Device{Name: "name1", Interval: 5, Value: 1.4})
+	d2, _ := repo.Save(&Device{Name: "name2", Interval: 10, Value: 2.4})
 	deviceController := DeviceController{&DeviceService{repo}}
 	req, err := http.NewRequest(http.MethodGet, "/devices", nil)
 	if err != nil {
@@ -200,7 +197,7 @@ func TestGetDevices_Pass(t *testing.T) {
 	handler.ServeHTTP(rr, req)
 
 	assert.EqualValues(t, http.StatusOK, rr.Code)
-	require.JSONEq(t, "[{\"id\":\""+id1+"\", \"interval\":5, \"name\":\"name1\", \"value\":1.4}, {\"id\":\""+id2+"\", \"interval\":10, \"name\":\"name2\", \"value\":2.4}]", rr.Body.String())
+	require.JSONEq(t, "[{\"id\":\""+d1.Id+"\", \"interval\":5, \"name\":\"name1\", \"value\":1.4}, {\"id\":\""+d2.Id+"\", \"interval\":10, \"name\":\"name2\", \"value\":2.4}]", rr.Body.String())
 }
 
 func TestGetDevices_Pass_Empty(t *testing.T) {

@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
@@ -11,9 +12,9 @@ type MongoDbRepository struct {
 	client mongo.Client
 }
 
-func (r *MongoDbRepository) Save(device *Device, id string) (*DeviceWithId, error) {
+func (r *MongoDbRepository) Save(device *Device) (*DeviceWithId, error) {
 	deviceWithId := DeviceWithId{Device: device}
-	deviceWithId.Id = id
+	deviceWithId.Id = primitive.NewObjectID().Hex()
 
 	col := r.client.Database("tsm").Collection("devices")
 	_, err := col.InsertOne(context.Background(), deviceWithId)
